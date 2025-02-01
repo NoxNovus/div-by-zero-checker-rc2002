@@ -76,7 +76,37 @@ public class DivByZeroTransfer extends CFTransfer {
    */
   private AnnotationMirror refineLhsOfComparison(
       Comparison operator, AnnotationMirror lhs, AnnotationMirror rhs) {
-    // TODO
+    if (equal(rhs, reflect(Zero.class))) {
+      switch (operator) {
+        case EQ:
+          return reflect(Zero.class);
+        case NE:
+          return reflect(NonZero.class);
+        case LT:
+          return reflect(NonZero.class);
+        case LE:
+          return lhs;
+        case GT:
+          return reflect(NonZero.class);
+        case GE:
+          return lhs;
+      }
+    } else if (equal(rhs, reflect(NonZero.class))) {
+      switch (operator) {
+        case EQ:
+          return reflect(NonZero.class);
+        case LT:
+          return lhs;
+        case GT:
+          return lhs;
+        case NE:
+          return reflect(Zero.class);
+        case LE:
+          return lhs;
+        case GE:
+          return lhs;
+      }
+    }
     return lhs;
   }
 
@@ -97,7 +127,31 @@ public class DivByZeroTransfer extends CFTransfer {
    */
   private AnnotationMirror arithmeticTransfer(
       BinaryOperator operator, AnnotationMirror lhs, AnnotationMirror rhs) {
-    // TODO
+    if (operator == BinaryOperator.PLUS || operator == BinaryOperator.MINUS) {
+      if (equal(lhs, reflect(Zero.class)) && equal(rhs, reflect(Zero.class))) {
+        return reflect(Zero.class);
+      } else if (equal(lhs, reflect(Zero.class))) {
+        return rhs;
+      } else if (equal(rhs, reflect(Zero.class))) {
+        return lhs;
+      }
+    }
+
+    if (operator == BinaryOperator.TIMES) {
+      if (equal(lhs, reflect(Zero.class)) || equal(rhs, reflect(Zero.class))) {
+        return reflect(Zero.class);
+      } else if (equal(lhs, reflect(NonZero.class)) && equal(rhs, reflect(NonZero.class))) {
+        return reflect(NonZero.class);
+      }
+    }
+
+    if (operator == BinaryOperator.DIVIDE || operator == BinaryOperator.MOD) {
+      if (equal(rhs, reflect(Zero.class))) {
+        return bottom();
+      } else if (equal(lhs, reflect(Zero.class))) {
+        return reflect(Zero.class);
+      }
+    }
     return top();
   }
 
